@@ -30,6 +30,14 @@ void CommandHandlingPhase::handleCommand(AsyncWebServerRequest *request) {
     {
         movement->rightStepper(0);
     }
+    else if (command == "release")
+    {
+        movement->setMotorsReleased(true);
+    }
+    else if (command == "hold")
+    {
+        movement->setMotorsReleased(false);
+    }
     else {
         request->send(400, "text/plain", "Unsupported command");    
         return;

@@ -30,6 +30,14 @@ export async function rightExtendUp() {
     await postCommand("r-0");
 }
 
+export async function releaseMotors() {
+    await postCommand("release");
+}
+
+export async function holdMotors() {
+    await postCommand("hold");
+}
+
 async function postCommand(command) {
     $.post("/command", {command}).fail(function() {
         alert("Command failed");

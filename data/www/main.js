@@ -58,11 +58,104 @@ function init() {
         doneWithPhase();
     });
 
+    $("#manualHome").click(function() {
+        $("#homeOffsetX").text(Math.round(currentState.topDistance / 2));
+        $("#homeOffsetY").text(Math.round(currentState.homeOffsetY));
+        $("#retractBeltsSlide").hide();
+        $("#manualHomeSlide").show();
+    });
+
+    // Plotter direction -> [left belt, right belt]; -1 retracts, 1 extends.
+    const jogDirections = {
+        up: [-1, -1],
+        down: [1, 1],
+        left: [-1, 1],
+        right: [1, -1],
+    };
+
+    let jogging = false;
+    function startJog(direction) {
+        if (jogging || $("#releaseMotorsToggle").is(":checked")) {
+            return;
+        }
+        jogging = true;
+        const [left, right] = jogDirections[direction];
+        (left < 0 ? client.leftRetractDown : client.leftExtendDown)();
+        (right < 0 ? client.rightRetractDown : client.rightExtendDown)();
+    }
+
+    function stopJog() {
+        if (!jogging) {
+            return;
+        }
+        jogging = false;
+        client.leftRetractUp();
+        client.rightRetractUp();
+    }
+
+    $(".jog-pad a").on("mousedown touchstart", function(e) {
+        e.preventDefault();
+        startJog($(this).data("dir"));
+    }).on("mouseup mouseleave touchend touchcancel", function(e) {
+        e.preventDefault();
+        stopJog();
+    }).on("click", function(e) {
+        e.preventDefault();
+    });
+
+    $("#releaseMotorsToggle").change(function() {
+        if (this.checked) {
+            stopJog();
+            client.releaseMotors();
+        } else {
+            client.holdMotors();
+        }
+    });
+
+    function leaveManualHome() {
+        stopJog();
+        if ($("#releaseMotorsToggle").is(":checked")) {
+            $("#releaseMotorsToggle").prop("checked", false);
+            client.holdMotors();
+        }
+    }
+
+    $("#manualHomeBack").click(function() {
+        leaveManualHome();
+        $("#manualHomeSlide").hide();
+        $("#retractBeltsSlide").show();
+    });
+
+    $("#atHomePoint").click(function() {
+        // Firmware re-engages the motors itself when setting the home position.
+        stopJog();
+        $("#releaseMotorsToggle").prop("checked", false);
+        doneWithPhase({
+            url: "/resume",
+            commandName: "Set Home Position",
+        });
+    });
+
+    // Don't leave Mural jogging or with released motors when the page is closed.
+    window.addEventListener("pagehide", function() {
+        if ($("#manualHomeSlide").is(":visible")) {
+            for (const command of ["l-0", "r-0", "hold"]) {
+                navigator.sendBeacon("/command", new URLSearchParams({command}));
+            }
+        }
+    });
+
+    const storedDistance = localStorage.getItem("topDistance");
+    if (storedDistance) {
+        $("#distanceInput").val(storedDistance);
+    }
+
     $("#setDistance").click(function() {
         const inputValue = parseInt($("#distanceInput").val());
         if (isNaN(inputValue)) {
             throw new Error("input value is not a number");
         }
+        localStorage.setItem("topDistance", inputValue);
 
         doneWithPhase({
             url: "/setTopDistance",

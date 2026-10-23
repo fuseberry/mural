@@ -11,6 +11,7 @@ class RetractBeltsPhase : public CommandHandlingPhase {
     public:
     RetractBeltsPhase(PhaseManager* manager, Movement* movement);
     void doneWithPhase(AsyncWebServerRequest *request);
+    void resumeTopDistance(AsyncWebServerRequest *request);
     const char* getName();
 };
 #endif

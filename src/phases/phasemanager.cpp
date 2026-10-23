@@ -76,6 +76,7 @@ void PhaseManager::respondWithState(AsyncWebServerRequest *request) {
     root["safeWidth"] = safeWidth;
     root["homeX"] = homePosition.x;
     root["homeY"] = homePosition.y;
+    root["homeOffsetY"] = topDistance != -1 ? homePosition.y + safeYFraction * topDistance : -1;
 
     root.printTo(*response);
     request->send(response);

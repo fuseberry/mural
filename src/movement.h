@@ -123,6 +123,7 @@ public:
 
     Point getHomeCoordinates();
     void disableMotors();
+    void setMotorsReleased(bool released);
 };
 
 #endif

@@ -35,6 +35,7 @@ void Movement::setTopDistance(const int distance) {
 
 void Movement::resumeTopDistance(int distance /* = d_pin in mm */) {
     setTopDistance(distance);
+    setMotorsReleased(false);
     homed = true;
 
     const Point homeCoordinates = getHomeCoordinates();
@@ -423,6 +424,23 @@ void Movement::extend1000mm() {
 void Movement::disableMotors() {
     leftMotor->disableOutputs();
     rightMotor->disableOutputs();
+}
+
+// The TMC2209 enable pin is active low, while AccelStepper drives it active high.
+// Hence enableOutputs() actually switches the drivers off (motors spin freely) and
+// disableOutputs() switches them on (motors hold their position).
+void Movement::setMotorsReleased(bool released) {
+    if (released) {
+        // Cancel any pending jog movement.
+        leftMotor->setCurrentPosition(leftMotor->currentPosition());
+        rightMotor->setCurrentPosition(rightMotor->currentPosition());
+        moving = false;
+        leftMotor->enableOutputs();
+        rightMotor->enableOutputs();
+    } else {
+        leftMotor->disableOutputs();
+        rightMotor->disableOutputs();
+    }
 }
 
 bool Movement::isMoving() {
